@@ -1,0 +1,152 @@
+<div class="container">
+  <!-- Add Form Section -->
+  <div class="form-section" *ngIf="showForm">
+    <div class="form-header">
+      <h2>{{ isEditMode ? '✏️ Edit Person' : '➕ Add New Person' }}</h2>
+      <button class="btn-close" (click)="toggleForm()">&times;</button>
+    </div>
+
+    <form (ngSubmit)="savePersonInfo()">
+      <div class="form-group">
+        <label for="name">Name:</label>
+        <input
+          type="text"
+          id="name"
+          [(ngModel)]="person.name"
+          name="name"
+          placeholder="Enter name"
+          required
+        />
+        <span class="error-message" *ngIf="formErrors['name']">{{ formErrors['name'] }}</span>
+      </div>
+
+      <div class="form-group">
+        <label for="nickName">Nick Name:</label>
+        <input
+          type="text"
+          id="nickName"
+          [(ngModel)]="person.nickName"
+          name="nickName"
+          placeholder="Enter nick name"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="dob">Date of Birth:</label>
+        <input
+          type="date"
+          id="dob"
+          [(ngModel)]="person.dob"
+          name="dob"
+          required
+        />
+        <span class="error-message" *ngIf="formErrors['dob']">{{ formErrors['dob'] }}</span>
+      </div>
+
+      <div class="form-group">
+        <label for="image">Browse Image:</label>
+        <input
+          type="file"
+          id="image"
+          (change)="onImageSelected($event)"
+          name="image"
+          accept="image/*"
+        />
+      </div>
+
+      <div class="image-preview" *ngIf="imagePreview">
+        <img [src]="imagePreview" alt="Preview" />
+      </div>
+
+      <div class="button-group">
+        <button type="submit" class="btn btn-save">{{ isEditMode ? 'Update' : 'Save' }}</button>
+        <button type="button" class="btn btn-reset" (click)="resetForm(); showForm = false">Cancel</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Add New Button -->
+  <div class="page-header" *ngIf="!showForm">
+    <h1>🎂 B'Days List</h1>
+    <div class="header-actions">
+      <button class="btn btn-refresh" (click)="refreshData()" [disabled]="isLoading" title="Refresh data">
+        {{ isLoading ? '⟳ Loading...' : '🔄 Refresh' }}
+      </button>
+      <button class="btn btn-primary" (click)="openAddForm()">
+        ➕ Add New Person
+      </button>
+    </div>
+  </div>
+
+  <!-- Search and Sort -->
+  <div class="controls" *ngIf="!showForm">
+    <div class="search-box">
+      <input
+        type="text"
+        [(ngModel)]="searchQuery"
+        (keyup)="onSearch()"
+        placeholder="Search by name or nickname..."
+        class="search-input"
+      />
+    </div>
+
+    <div class="sort-box">
+      <label for="sortBy">Sort by:</label>
+      <select
+        id="sortBy"
+        [(ngModel)]="sortBy"
+        (change)="onSortChange()"
+        class="sort-select"
+      >
+        <option value="name">Name (A-Z)</option>
+        <option value="name-reverse">Name (Z-A)</option>
+        <option value="dob">Date of Birth</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats" *ngIf="!showForm">
+    <p *ngIf="personList.length === 0 && filteredList.length === 0" class="no-data">
+      📭 No persons saved yet. Click "Add New Person" to add one.
+    </p>
+    <p *ngIf="personList.length > 0 && filteredList.length === 0" class="no-data">
+      🔍 No results found for your search/filter.
+    </p>
+    <p *ngIf="personList.length > 0 && filteredList.length > 0" class="data-count">
+      Total Persons: <strong>{{ personList.length }}</strong> | Showing: <strong>{{ filteredList.length }}</strong>
+    </p>
+  </div>
+
+  <!-- Table View -->
+  <div class="table-container" *ngIf="filteredList.length > 0 && !showForm">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Birthday</th>
+          <th>Name</th>
+          <th>Nick Name</th>
+          <th>Date of Birth</th>
+          <th>Age</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let person of filteredList; let i = index">
+          <td class="photo-cell">
+            <img *ngIf="person.image" [src]="person.image" alt="{{ person.name }}" class="photo" />
+            <span *ngIf="!person.image" class="no-photo">No Image</span>
+          </td>
+          <td>{{ person.name }}</td>
+          <td>{{ person.nickName || '-' }}</td>
+          <td>{{ person.dob | date: 'MMM dd, yyyy' }}</td>
+          <td>{{ calculateAge(person.dob) }} years</td>
+          <td class="actions-cell">
+            <button class="btn-small btn-edit" (click)="editPerson(person)" title="Edit">✏️ Edit</button>
+            <button class="btn-small btn-delete" (click)="deletePersonByObject(person)" title="Delete">🗑️ Delete</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

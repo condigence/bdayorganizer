@@ -1,0 +1,55 @@
+<nav class="navbar" (mouseleave)="closeDropdowns()">
+  <div class="navbar-container">
+    <div class="navbar-brand">
+      <h1>🎂 B'Days Organizer</h1>
+    </div>
+
+    <div class="navbar-menu">
+      <div class="navbar-item dropdown">
+        <button class="dropdown-btn" (click)="toggleUpcomingDropdown()">
+          🗓️ Upcoming B'days
+          <span class="badge" *ngIf="upcomingBdays.length > 0">{{ upcomingBdays.length }}</span>
+        </button>
+        <div class="dropdown-content" *ngIf="showUpcomingDropdown">
+          <div *ngIf="upcomingBdays.length === 0" class="dropdown-empty">
+            No upcoming birthdays in the next 30 days
+          </div>
+          <div *ngFor="let person of upcomingBdays" class="dropdown-item">
+            <div class="item-content">
+              <img *ngIf="person.image" [src]="person.image" alt="{{ person.name }}" class="item-photo" />
+              <div class="item-info">
+                <p class="item-name">{{ person.name }}</p>
+                <p class="item-date">{{ getNextBirthday(person.dob) | date: 'MMM dd' }} ({{ getDaysUntilDisplay(person) }} days)</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="navbar-item dropdown">
+        <button class="dropdown-btn" (click)="toggleRecentDropdown()">
+          🎉 Recent B'days
+          <span class="badge" *ngIf="recentBdays.length > 0">{{ recentBdays.length }}</span>
+        </button>
+        <div class="dropdown-content" *ngIf="showRecentDropdown">
+          <div *ngIf="recentBdays.length === 0" class="dropdown-empty">
+            No recent birthdays in the last 7 days
+          </div>
+          <div *ngFor="let person of recentBdays" class="dropdown-item">
+            <div class="item-content">
+              <img *ngIf="person.image" [src]="person.image" alt="{{ person.name }}" class="item-photo" />
+              <div class="item-info">
+                <p class="item-name">{{ person.name }}</p>
+                <p class="item-date">{{ getLastBirthday(person.dob) | date: 'MMM dd' }} ({{ getDaysSinceDisplay(person) }} days ago)</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="navbar-item">
+        <a routerLink="/" class="nav-link" (click)="closeDropdowns()">📋 B'Days List</a>
+      </div>
+    </div>
+  </div>
+</nav>

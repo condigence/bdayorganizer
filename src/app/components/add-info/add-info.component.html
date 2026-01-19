@@ -1,0 +1,81 @@
+<div class="container">
+  <h2>Add Person Information</h2>
+  
+  <form (ngSubmit)="savePersonInfo()">
+    <div class="form-group">
+      <label for="name">Name:</label>
+      <input
+        type="text"
+        id="name"
+        [(ngModel)]="person.name"
+        name="name"
+        placeholder="Enter name"
+        required
+      />
+      <span class="error-message" *ngIf="formErrors['name']">{{ formErrors['name'] }}</span>
+    </div>
+
+    <div class="form-group">
+      <label for="nickName">Nick Name:</label>
+      <input
+        type="text"
+        id="nickName"
+        [(ngModel)]="person.nickName"
+        name="nickName"
+        placeholder="Enter nick name"
+      />
+    </div>
+
+    <div class="form-group">
+      <label for="dob">Date of Birth:</label>
+      <input
+        type="date"
+        id="dob"
+        [(ngModel)]="person.dob"
+        name="dob"
+        required
+      />
+      <span class="error-message" *ngIf="formErrors['dob']">{{ formErrors['dob'] }}</span>
+    </div>
+
+    <div class="form-group">
+      <label for="image">Browse Image:</label>
+      <input
+        type="file"
+        id="image"
+        (change)="onImageSelected($event)"
+        name="image"
+        accept="image/*"
+      />
+    </div>
+
+    <div class="image-preview" *ngIf="imagePreview">
+      <img [src]="imagePreview" alt="Preview" />
+    </div>
+
+    <div class="button-group">
+      <button type="submit" class="btn btn-save">{{ isEditMode ? 'Update' : 'Save' }}</button>
+      <button type="button" class="btn btn-reset" (click)="resetForm()">Reset</button>
+    </div>
+  </form>
+
+  <div class="person-list" *ngIf="personList && personList.length > 0">
+    <h3>Saved Persons ({{ personList.length }})</h3>
+    <div class="list-container">
+      <div class="person-card" *ngFor="let p of personList; let i = index">
+        <div class="card-header">
+          <h4>{{ p.name }}</h4>
+          <div class="card-actions">
+            <button type="button" class="btn-action btn-edit" (click)="editPerson(i, p)" title="Edit">✏️ Edit</button>
+            <button type="button" class="btn-action btn-delete" (click)="deletePerson(i)" title="Delete">🗑️ Delete</button>
+          </div>
+        </div>
+        <img *ngIf="p.image" [src]="p.image" alt="{{ p.name }}" class="person-image" />
+        <div class="person-info">
+          <p><strong>Nick Name:</strong> {{ p.nickName || 'N/A' }}</p>
+          <p><strong>DOB:</strong> {{ p.dob }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
