@@ -1,0 +1,66 @@
+<div class="container">
+  <div class="page-header">
+    <h1>🎂 Upcoming Birthdays</h1>
+    <div class="header-actions">
+      <button class="btn btn-refresh" (click)="refreshData()" [disabled]="isLoading" title="Refresh data">
+        {{ isLoading ? '⟳ Loading...' : '🔄 Refresh' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="filter-section">
+    <label for="daysFilter">Show birthdays in next:</label>
+    <select id="daysFilter" [(ngModel)]="daysFilter" (change)="onDaysFilterChange()" class="filter-select">
+      <option [value]="7">7 days</option>
+      <option [value]="14">14 days</option>
+      <option [value]="30">30 days</option>
+      <option [value]="60">60 days</option>
+      <option [value]="90">90 days</option>
+    </select>
+  </div>
+
+  <div class="stats" *ngIf="!isLoading">
+    <p *ngIf="upcomingBirthdays.length === 0" class="no-data">
+      📭 No upcoming birthdays in the next {{ daysFilter }} days.
+    </p>
+    <p *ngIf="upcomingBirthdays.length > 0" class="data-count">
+      Found <strong>{{ upcomingBirthdays.length }}</strong> upcoming {{ upcomingBirthdays.length === 1 ? 'birthday' : 'birthdays' }}
+    </p>
+  </div>
+
+  <div class="birthdays-grid" *ngIf="upcomingBirthdays.length > 0 && !isLoading">
+    <div class="birthday-card" *ngFor="let birthday of upcomingBirthdays" [class.today]="birthday.daysUntil === 0">
+      <div class="card-header">
+        <span class="emoji">{{ getBirthdayEmoji(birthday.daysUntil) }}</span>
+        <span class="days-text" [class.today-text]="birthday.daysUntil === 0">
+          {{ getDaysUntilText(birthday.daysUntil) }}
+        </span>
+      </div>
+      
+      <div class="card-image">
+        <img *ngIf="birthday.person.image" [src]="birthday.person.image" [alt]="birthday.person.name" />
+        <div *ngIf="!birthday.person.image" class="no-image">
+          <span class="no-image-icon">👤</span>
+        </div>
+      </div>
+      
+      <div class="card-content">
+        <h3 class="person-name">{{ birthday.person.name }}</h3>
+        <p class="person-nickname" *ngIf="birthday.person.nickName">{{ birthday.person.nickName }}</p>
+        <div class="birthday-info">
+          <p class="birthday-date">
+            <strong>Date:</strong> {{ birthday.nextBirthday | date: 'MMM dd, yyyy' }}
+          </p>
+          <p class="birthday-age">
+            <strong>Turning:</strong> {{ birthday.age + 1 }} years old
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="loading" *ngIf="isLoading">
+    <p>Loading birthdays...</p>
+  </div>
+</div>
+
