@@ -24,13 +24,13 @@ try {
   console.log('Could not load person-info.json, starting with empty data');
 }
 
-// Get all people
-app.get('/api/people', (req, res) => {
+// Get all persons
+app.get('/api/person', (req, res) => {
   res.json(peopleData);
 });
 
 // Get a single person
-app.get('/api/people/:id', (req, res) => {
+app.get('/api/person/:id', (req, res) => {
   const person = peopleData.find((p: any) => p.id === req.params.id);
   if (person) {
     res.json(person);
@@ -40,7 +40,7 @@ app.get('/api/people/:id', (req, res) => {
 });
 
 // Add a new person
-app.post('/api/people', (req, res) => {
+app.post('/api/person', (req, res) => {
   const newPerson = { id: Date.now().toString(), ...req.body };
   peopleData.push(newPerson);
   savePeopleData();
@@ -48,7 +48,7 @@ app.post('/api/people', (req, res) => {
 });
 
 // Update a person
-app.put('/api/people/:id', (req, res) => {
+app.put('/api/person/:id', (req, res) => {
   const index = peopleData.findIndex((p: any) => p.id === req.params.id);
   if (index !== -1) {
     peopleData[index] = { ...peopleData[index], ...req.body };
@@ -60,7 +60,7 @@ app.put('/api/people/:id', (req, res) => {
 });
 
 // Delete a person
-app.delete('/api/people/:id', (req, res) => {
+app.delete('/api/person/:id', (req, res) => {
   const index = peopleData.findIndex((p: any) => p.id === req.params.id);
   if (index !== -1) {
     const deleted = peopleData.splice(index, 1);
@@ -76,5 +76,5 @@ function savePeopleData() {
 }
 
 app.listen(PORT, () => {
-  console.log(`Backend server running on http://localhost:${PORT}`);
+  console.log(`Server running on http://localhost:${PORT}`);
 });

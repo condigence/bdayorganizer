@@ -5,14 +5,15 @@ import { Person } from '../../models/person';
 import { PersonService } from '../../services/person.service';
 
 @Component({
-  selector: 'app-add-info',
+  selector: 'app-add-person',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './add-info.component.html',
-  styleUrl: './add-info.component.css'
+  templateUrl: './add-person.component.html',
+  styleUrl: './add-person.component.css'
 })
-export class AddInfoComponent implements OnInit {
+export class AddPersonComponent implements OnInit {
   person: Person = {
+    id: '',
     name: '',
     nickName: '',
     dob: new Date(),
@@ -77,6 +78,7 @@ export class AddInfoComponent implements OnInit {
 
   resetForm() {
     this.person = {
+      id: '',
       name: '',
       nickName: '',
       dob: new Date(),

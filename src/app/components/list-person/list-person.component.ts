@@ -6,13 +6,13 @@ import { Person } from '../../models/person';
 import { PersonService } from '../../services/person.service';
 
 @Component({
-  selector: 'app-list-info',
+  selector: 'app-list-person',
   standalone: true,
   imports: [CommonModule, RouterModule, FormsModule],
-  templateUrl: './list-info.component.html',
-  styleUrl: './list-info.component.css'
+  templateUrl: './list-person.component.html',
+  styleUrl: './list-person.component.css'
 })
-export class ListInfoComponent implements OnInit, OnDestroy {
+export class ListPersonComponent implements OnInit, OnDestroy {
   personList: Person[] = [];
   filteredList: Person[] = [];
   searchQuery: string = '';
@@ -24,6 +24,7 @@ export class ListInfoComponent implements OnInit, OnDestroy {
   formErrors: { [key: string]: string } = {};
 
   person: Person = {
+    id: '',
     name: '',
     nickName: '',
     dob: new Date(),
@@ -38,7 +39,7 @@ export class ListInfoComponent implements OnInit, OnDestroy {
     this.resetForm();
     // Subscribe to personList$ to get data changes
     this.personService.personList$.subscribe((list) => {
-      console.log('ListInfo received persons:', list);
+      console.log('ListPerson received persons:', list);
       this.personList = list;
       this.filterAndSort();
     });
@@ -171,7 +172,6 @@ export class ListInfoComponent implements OnInit, OnDestroy {
       
       if (actualIndex !== -1) {
         this.personService.deletePerson(actualIndex);
-        // Don't call refreshData() - service already updates the subject
       } else {
         alert('Could not find person to delete. Please try again.');
       }
@@ -180,6 +180,7 @@ export class ListInfoComponent implements OnInit, OnDestroy {
 
   resetForm(): void {
     this.person = {
+      id: '',
       name: '',
       nickName: '',
       dob: new Date(),

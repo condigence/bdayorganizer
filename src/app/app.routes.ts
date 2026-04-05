@@ -1,8 +1,8 @@
 import { Routes } from '@angular/router';
-import { AddInfoComponent } from './components/add-info/add-info.component';
-import { ListInfoComponent } from './components/list-info/list-info.component';
+import { AddPersonComponent } from './components/add-person/add-person.component';
+import { ListPersonComponent } from './components/list-person/list-person.component';
 
 export const routes: Routes = [
-  { path: 'add', component: AddInfoComponent },
-  { path: '', component: ListInfoComponent }
+  { path: 'add', component: AddPersonComponent },
+  { path: '', component: ListPersonComponent }
 ];

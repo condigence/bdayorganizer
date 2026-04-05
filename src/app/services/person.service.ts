@@ -24,7 +24,7 @@ export class PersonService {
   }
 
   private loadFromBackend(): void {
-    this.http.get<Person[]>(`${this.backendUrl}/persons`).subscribe(
+    this.http.get<Person[]>(`${this.backendUrl}/person`).subscribe(
       (data) => {
         console.log('Loaded persons from backend:', data);
         if (Array.isArray(data) && data.length > 0) {
@@ -61,7 +61,7 @@ export class PersonService {
     // Retry logic
     let retries = 3;
     const syncWithRetry = () => {
-      this.http.post<any>(`${this.backendUrl}/persons`, person).subscribe(
+      this.http.post<any>(`${this.backendUrl}/person`, person).subscribe(
         (response) => {
           console.log('Person added to backend:', response);
           // Reload the list from backend
@@ -103,7 +103,7 @@ export class PersonService {
         const data = JSON.parse(e.target.result);
         if (Array.isArray(data)) {
           // Save to backend
-          this.http.put<any>(`${this.backendUrl}/persons`, data).subscribe(
+          this.http.put<any>(`${this.backendUrl}/person`, data).subscribe(
             (response) => {
               console.log('Data imported to backend:', response);
               this.personListSubject.next(data);
@@ -139,7 +139,7 @@ export class PersonService {
     // Sync with backend - Retry logic
     let retries = 3;
     const syncWithRetry = () => {
-      this.http.put<any>(`${this.backendUrl}/persons`, updatedList).subscribe(
+      this.http.put<any>(`${this.backendUrl}/person`, updatedList).subscribe(
         (response) => {
           console.log('Person deleted and synced with backend:', response);
           this.personListSubject.next(updatedList);
@@ -175,7 +175,7 @@ export class PersonService {
       // Sync with backend - Retry logic
       let retries = 3;
       const syncWithRetry = () => {
-        this.http.put<any>(`${this.backendUrl}/persons`, newList).subscribe(
+        this.http.put<any>(`${this.backendUrl}/person`, newList).subscribe(
           (response) => {
             console.log('Person updated and synced with backend:', response);
             this.personListSubject.next(newList);
@@ -199,7 +199,7 @@ export class PersonService {
   }
 
   deleteAllData(): void {
-    this.http.delete<any>(`${this.backendUrl}/persons`).subscribe(
+    this.http.delete<any>(`${this.backendUrl}/person`).subscribe(
       (response) => {
         console.log('All data deleted:', response);
         this.personListSubject.next([]);
