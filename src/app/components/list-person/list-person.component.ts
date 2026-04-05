@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { Person } from '../../models/person';
 import { PersonService } from '../../services/person.service';
+import { BirthdayUtilService } from '../../services/birthday-util.service';
 
 @Component({
   selector: 'app-list-person',
@@ -33,7 +34,10 @@ export class ListPersonComponent implements OnInit, OnDestroy {
 
   imagePreview: string = '';
 
-  constructor(private personService: PersonService) {}
+  constructor(
+    private personService: PersonService,
+    private birthdayUtil: BirthdayUtilService
+  ) {}
 
   ngOnInit(): void {
     this.resetForm();
@@ -142,7 +146,7 @@ export class ListPersonComponent implements OnInit, OnDestroy {
     
     if (actualIndex !== -1) {
       this.person = { ...person };
-      this.imagePreview = person.image;
+      this.imagePreview = person.image || '';
       this.editingIndex = actualIndex;
       this.isEditMode = true;
       this.showForm = true;
@@ -192,13 +196,6 @@ export class ListPersonComponent implements OnInit, OnDestroy {
   }
 
   calculateAge(dob: Date | string): number {
-    const birthDate = new Date(dob);
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    return age;
+    return this.birthdayUtil.calculateAge(dob);
   }
 }

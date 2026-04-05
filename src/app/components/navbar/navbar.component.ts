@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { Person } from '../../models/person';
 import { PersonService } from '../../services/person.service';
+import { BirthdayUtilService } from '../../services/birthday-util.service';
 
 @Component({
   selector: 'app-navbar',
@@ -18,7 +19,10 @@ export class NavbarComponent implements OnInit {
   showRecentDropdown = false;
   personList: Person[] = [];
 
-  constructor(private personService: PersonService) {}
+  constructor(
+    private personService: PersonService,
+    private birthdayUtil: BirthdayUtilService
+  ) {}
 
   ngOnInit(): void {
     this.personService.personList$.subscribe((list) => {
@@ -35,13 +39,13 @@ export class NavbarComponent implements OnInit {
     const upcoming = this.personList
       .map(person => ({
         person,
-        nextBday: this.getNextBirthday(person.dob)
+        nextBday: this.birthdayUtil.getNextBirthday(person.dob)
       }))
       .filter(item => {
-        const daysUntil = this.daysUntil(item.nextBday);
+        const daysUntil = this.birthdayUtil.daysUntil(item.nextBday);
         return daysUntil >= 0 && daysUntil <= 30;
       })
-      .sort((a, b) => this.daysUntil(a.nextBday) - this.daysUntil(b.nextBday))
+      .sort((a, b) => this.birthdayUtil.daysUntil(a.nextBday) - this.birthdayUtil.daysUntil(b.nextBday))
       .slice(0, 5)
       .map(item => item.person);
 
@@ -49,13 +53,13 @@ export class NavbarComponent implements OnInit {
     const recent = this.personList
       .map(person => ({
         person,
-        lastBday: this.getLastBirthday(person.dob)
+        lastBday: this.birthdayUtil.getLastBirthday(person.dob)
       }))
       .filter(item => {
-        const daysSince = this.daysSince(item.lastBday);
+        const daysSince = this.birthdayUtil.daysSince(item.lastBday);
         return daysSince >= 0 && daysSince <= 7;
       })
-      .sort((a, b) => this.daysSince(a.lastBday) - this.daysSince(b.lastBday))
+      .sort((a, b) => this.birthdayUtil.daysSince(a.lastBday) - this.birthdayUtil.daysSince(b.lastBday))
       .slice(0, 5)
       .map(item => item.person);
 
@@ -64,53 +68,27 @@ export class NavbarComponent implements OnInit {
   }
 
   getNextBirthday(dob: Date): Date {
-    const dobDate = new Date(dob);
-    const today = new Date();
-    const nextBday = new Date(today.getFullYear(), dobDate.getMonth(), dobDate.getDate());
-    
-    if (nextBday < today) {
-      nextBday.setFullYear(today.getFullYear() + 1);
-    }
-    
-    return nextBday;
+    return this.birthdayUtil.getNextBirthday(dob);
   }
 
   getLastBirthday(dob: Date): Date {
-    const dobDate = new Date(dob);
-    const today = new Date();
-    const lastBday = new Date(today.getFullYear(), dobDate.getMonth(), dobDate.getDate());
-    
-    if (lastBday > today) {
-      lastBday.setFullYear(today.getFullYear() - 1);
-    }
-    
-    return lastBday;
+    return this.birthdayUtil.getLastBirthday(dob);
   }
 
   daysUntil(date: Date): number {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const givenDate = new Date(date);
-    givenDate.setHours(0, 0, 0, 0);
-    const diffTime = givenDate.getTime() - today.getTime();
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return this.birthdayUtil.daysUntil(date);
   }
 
   daysSince(date: Date): number {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const givenDate = new Date(date);
-    givenDate.setHours(0, 0, 0, 0);
-    const diffTime = today.getTime() - givenDate.getTime();
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return this.birthdayUtil.daysSince(date);
   }
 
   getDaysUntilDisplay(person: Person): number {
-    return this.daysUntil(this.getNextBirthday(person.dob));
+    return this.birthdayUtil.getDaysUntilNextBirthday(person.dob);
   }
 
   getDaysSinceDisplay(person: Person): number {
-    return this.daysSince(this.getLastBirthday(person.dob));
+    return this.birthdayUtil.getDaysSinceLastBirthday(person.dob);
   }
 
   toggleUpcomingDropdown(): void {

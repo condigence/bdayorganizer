@@ -1,7 +1,8 @@
-import { Injectable } from '@angular/core';
+import { Inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { Person } from '../models/person';
+import { API_CONFIG, ApiConfig } from '../config/api.config';
 
 @Injectable({
   providedIn: 'root'
@@ -9,13 +10,17 @@ import { Person } from '../models/person';
 export class PersonService {
   private personListSubject = new BehaviorSubject<Person[]>([]);
   public personList$ = this.personListSubject.asObservable();
-  private backendUrl = 'http://localhost:3000/api';
 
-  constructor(private http: HttpClient) {
-    // Load from assets first on startup
+  constructor(
+    private http: HttpClient,
+    @Inject(API_CONFIG) private apiConfig: ApiConfig
+  ) {
     this.loadFromAssets();
-    // Then try to sync with backend
     this.loadFromBackend();
+  }
+
+  private get personUrl(): string {
+    return `${this.apiConfig.baseUrl}/person`;
   }
 
   loadPersonList(): void {
@@ -24,7 +29,7 @@ export class PersonService {
   }
 
   private loadFromBackend(): void {
-    this.http.get<Person[]>(`${this.backendUrl}/person`).subscribe(
+    this.http.get<Person[]>(this.personUrl).subscribe(
       (data) => {
         console.log('Loaded persons from backend:', data);
         if (Array.isArray(data) && data.length > 0) {
@@ -57,71 +62,31 @@ export class PersonService {
 
   addPerson(person: Person): void {
     console.log('Adding person, syncing with backend...');
-    
-    // Retry logic
-    let retries = 3;
-    const syncWithRetry = () => {
-      this.http.post<any>(`${this.backendUrl}/person`, person).subscribe(
-        (response) => {
-          console.log('Person added to backend:', response);
-          // Reload the list from backend
-          this.loadPersonList();
-          alert('Person added successfully!');
-        },
-        (error) => {
-          retries--;
-          if (retries > 0) {
-            console.log(`Backend sync failed, retrying... (${retries} attempts left)`);
-            setTimeout(() => syncWithRetry(), 1000);
-          } else {
-            console.error('Error adding person to backend:', error);
-            alert('Failed to save person. Please ensure backend is running.');
+    this.syncWithRetry(
+      () => this.http.post<any>(this.personUrl, person),
+      () => {
+        this.loadPersonList();
+        alert('Person added successfully!');
+      },
+      () => alert('Failed to save person. Please ensure backend is running.')
+    );
+  }
+
+  importPersons(persons: Person[]): void {
+    this.personListSubject.next(persons);
+    let synced = 0;
+    persons.forEach((person: Person) => {
+      this.http.post<any>(this.personUrl, person).subscribe(
+        () => {
+          synced++;
+          if (synced === persons.length) {
+            this.loadFromBackend();
+            alert('Data imported successfully!');
           }
-        }
+        },
+        (error) => console.error('Error importing person to backend:', error)
       );
-    };
-    
-    syncWithRetry();
-  }
-
-  exportAsJson(): void {
-    const personList = this.personListSubject.value;
-    const jsonData = JSON.stringify(personList, null, 2);
-    const blob = new Blob([jsonData], { type: 'application/json' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'person-info.json';
-    link.click();
-    window.URL.revokeObjectURL(url);
-  }
-
-  importFromJson(file: File): void {
-    const reader = new FileReader();
-    reader.onload = (e: any) => {
-      try {
-        const data = JSON.parse(e.target.result);
-        if (Array.isArray(data)) {
-          // Save to backend
-          this.http.put<any>(`${this.backendUrl}/person`, data).subscribe(
-            (response) => {
-              console.log('Data imported to backend:', response);
-              this.personListSubject.next(data);
-              alert('Data imported successfully!');
-            },
-            (error) => {
-              console.error('Error importing to backend:', error);
-              alert('Failed to import data. Please check if backend is running.');
-            }
-          );
-        } else {
-          alert('Invalid JSON format. Expected an array.');
-        }
-      } catch (error) {
-        alert('Error parsing JSON file');
-      }
-    };
-    reader.readAsText(file);
+    });
   }
 
   getPersonList(): Person[] {
@@ -130,78 +95,54 @@ export class PersonService {
 
   deletePerson(index: number): void {
     const currentList = this.personListSubject.value;
+    const personToDelete = currentList[index];
+    const personId = personToDelete.id;
+
+    if (!personId) {
+      console.error('Cannot delete person without id');
+      return;
+    }
+
     const updatedList = currentList.filter((_, i) => i !== index);
-    
-    // Update local state immediately
     this.personListSubject.next(updatedList);
     console.log('Person deleted locally, syncing with backend...');
-    
-    // Sync with backend - Retry logic
-    let retries = 3;
-    const syncWithRetry = () => {
-      this.http.put<any>(`${this.backendUrl}/person`, updatedList).subscribe(
-        (response) => {
-          console.log('Person deleted and synced with backend:', response);
-          this.personListSubject.next(updatedList);
-          alert('Person deleted successfully!');
-        },
-        (error) => {
-          retries--;
-          if (retries > 0) {
-            console.log(`Backend sync failed, retrying... (${retries} attempts left)`);
-            setTimeout(() => syncWithRetry(), 1000);
-          } else {
-            console.error('Error syncing delete with backend:', error);
-            console.log('Delete saved locally. Backend will sync when available.');
-          }
-        }
-      );
-    };
-    
-    syncWithRetry();
+
+    this.syncWithRetry(
+      () => this.http.delete<any>(`${this.personUrl}/${personId}`),
+      () => {
+        this.loadFromBackend();
+        alert('Person deleted successfully!');
+      },
+      () => console.log('Delete saved locally. Backend will sync when available.')
+    );
   }
 
   updatePerson(index: number, updatedPerson: Person): void {
     const currentList = this.personListSubject.value;
-    if (index >= 0 && index < currentList.length) {
-      // Replace the person at the exact index in the current list
-      const newList = [...currentList];
-      newList[index] = updatedPerson;
-      
-      // Update local state immediately
-      this.personListSubject.next(newList);
-      console.log('Person updated locally, syncing with backend...');
-      
-      // Sync with backend - Retry logic
-      let retries = 3;
-      const syncWithRetry = () => {
-        this.http.put<any>(`${this.backendUrl}/person`, newList).subscribe(
-          (response) => {
-            console.log('Person updated and synced with backend:', response);
-            this.personListSubject.next(newList);
-            alert('Person updated successfully!');
-          },
-          (error) => {
-            retries--;
-            if (retries > 0) {
-              console.log(`Backend sync failed, retrying... (${retries} attempts left)`);
-              setTimeout(() => syncWithRetry(), 1000);
-            } else {
-              console.error('Error syncing update with backend:', error);
-              console.log('Update saved locally. Backend will sync when available.');
-            }
-          }
-        );
-      };
-      
-      syncWithRetry();
-    }
+    if (index < 0 || index >= currentList.length) return;
+
+    const personId = updatedPerson.id || currentList[index].id;
+    const personToSave = { ...updatedPerson, id: personId };
+
+    const newList = [...currentList];
+    newList[index] = personToSave;
+    this.personListSubject.next(newList);
+    console.log('Person updated locally, syncing with backend...');
+
+    this.syncWithRetry(
+      () => this.http.put<any>(`${this.personUrl}/${personId}`, personToSave),
+      () => {
+        this.loadFromBackend();
+        alert('Person updated successfully!');
+      },
+      () => console.log('Update saved locally. Backend will sync when available.')
+    );
   }
 
   deleteAllData(): void {
-    this.http.delete<any>(`${this.backendUrl}/person`).subscribe(
-      (response) => {
-        console.log('All data deleted:', response);
+    this.http.delete<any>(this.personUrl).subscribe(
+      () => {
+        console.log('All data deleted');
         this.personListSubject.next([]);
       },
       (error) => {
@@ -209,6 +150,31 @@ export class PersonService {
         this.personListSubject.next([]);
       }
     );
+  }
+
+  private syncWithRetry(
+    request: () => Observable<any>,
+    onSuccess: () => void,
+    onFailure: () => void,
+    maxRetries = 3
+  ): void {
+    let retries = maxRetries;
+    const attempt = () => {
+      request().subscribe(
+        () => onSuccess(),
+        (error) => {
+          retries--;
+          if (retries > 0) {
+            console.log(`Backend sync failed, retrying... (${retries} attempts left)`);
+            setTimeout(() => attempt(), 1000);
+          } else {
+            console.error('Backend sync failed after retries:', error);
+            onFailure();
+          }
+        }
+      );
+    };
+    attempt();
   }
 }
 

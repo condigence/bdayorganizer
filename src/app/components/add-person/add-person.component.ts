@@ -97,7 +97,7 @@ export class AddPersonComponent implements OnInit {
     
     if (actualIndex !== -1) {
       this.person = { ...person };
-      this.imagePreview = person.image;
+      this.imagePreview = person.image || '';
       this.editingIndex = actualIndex;
       this.isEditMode = true;
       this.formErrors = {};
